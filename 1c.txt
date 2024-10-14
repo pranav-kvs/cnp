@@ -1,0 +1,76 @@
+
+#include <stdio.h>
+#define DEGREE 16
+
+int result[30];
+
+int mod2add(int x, int y) {
+    return x ^ y;  
+}
+
+void calc_crc(int *data, int length) {
+    // CRC-16-CCITT polynomial (x^16 + x^12 + x^5 + 1)
+    int ccitt[DEGREE + 1] = {1,0,0,0,0,0,1,0,1,1,0,0,0,1,0,0,1};
+    int i,j;
+    
+    for (i = 0; i <= length - DEGREE; i++) {
+        if (data[i] == 1) {
+            for (j = 0; j <= DEGREE; j++) {
+                data[i + j] = mod2add(data[i + j], ccitt[j]);
+            }
+        }
+    }
+}
+
+void print_data(int *data, int start, int end) {
+    int i;
+    for (i = start; i < end; i++)
+        printf("%d", data[i]);
+}
+
+int main() {
+    
+    int data[30]; 
+    int i,length = 0;
+    char ch;
+
+    printf("Enter the data (Message) stream: ");
+    
+    while ((ch = getchar()) != '\n')
+        data[length++] = ch - '0';  // Convert character to integer (0 or 1)
+
+    // Append DEGREE zeros to the end of the data for CRC calculation
+    for (i = 0; i < DEGREE; i++)
+        data[length++] = 0;
+
+    // Copy data to result array for processing
+    for (i = 0; i < length; i++)
+        result[i] = data[i];
+
+    // Calculate the CRC
+    calc_crc(result, length);
+
+    // Print the transmitted frame (original data + CRC)
+    printf("\nThe transmitted frame is: ");
+    print_data(data, 0, length - DEGREE);    // Original data
+    print_data(result, length - DEGREE, length);  // CRC
+
+    // Input data for CRC verification
+    printf("\nEnter the stream for which CRC has to be checked: ");
+    length = 0;
+    while ((ch = getchar()) != '\n')
+        data[length++] = ch - '0';  // Convert character to integer (0 or 1)
+
+    // Copy input data to result array for CRC check
+    for (int i = 0; i < length; i++)
+        result[i] = data[i];
+
+    // Calculate CRC for the entered stream
+    calc_crc(result, length);
+
+    // Print the calculated checksum (should be 0 if data is correct)
+    printf("\nCalculated Checksum: ");
+    print_data(result, length - DEGREE, length);
+
+    return 0;
+}
